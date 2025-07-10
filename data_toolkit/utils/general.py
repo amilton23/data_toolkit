@@ -115,7 +115,7 @@ def text_preprocessing(text : str):
     text = re.sub(r'[^a-zA-Z\s]*\s*$', '', text)
     return text
 
-def deslocar_para_esquerda(df, linha_idx, coluna_inicio):
+def df_move_to_left(df, linha_idx, coluna_inicio):
     """
     Desloca os valores de uma linha do DataFrame uma posição para a esquerda,
     preenchendo com None nas colunas à direita da coluna selecionada.
