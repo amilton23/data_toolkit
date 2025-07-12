@@ -400,25 +400,6 @@ def bar_of_pie(
     # Remover a legenda
     ax2.axis('off')
     ax2.set_xlim(- 2.5 * width, 2.5 * width)
-
-#     # Conectar o gráfico de pizza com o gráfico de barras com uma seta
-#     theta = (wedges[1].theta1 + wedges[1].theta2) / 2  # Ponto médio da fatia de interesse
-#     center, r = wedges[1].center, wedges[1].r
-#     x = r * np.cos(np.pi / 180 * theta) + center[0]
-#     y = r * np.sin(np.pi / 180 * theta) + center[1]
-#     bar_height = sum(bar_values)
-
-#     # Ajustar a posição da seta
-#     arrow_start = (x, y)
-#     arrow_end = (-width / 2, bar_height)
-    
-#     # Desenhar a seta de conexão
-#     arrow = FancyArrowPatch(arrow_start, arrow_end, 
-#                             connectionstyle="arc3, rad=-1.5", 
-#                             arrowstyle="->", 
-#                             mutation_scale=15, 
-#                             color='black')
-#     ax2.add_patch(arrow)
     
     if settitle == '':
         fig.suptitle(f'Gráfico de pizza com barras condicional a partir de {col}')

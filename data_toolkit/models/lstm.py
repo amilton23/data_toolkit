@@ -36,7 +36,7 @@ from torchmetrics import Accuracy as accuracy
 from sklearn.metrics import classification_report, confusion_matrix
 
 
-class TimesSeriesTorchDataset(Dataset):
+class TimeSeriesTorchDataset(Dataset):
     """
     
     """
@@ -49,44 +49,45 @@ class TimesSeriesTorchDataset(Dataset):
     def __getitem__(self, idx):
         sequence, label = self.sequences[idx]
         return dict(
-            sequence = torch.tensor(sequence.to_numpy()),
+            sequence = torch.tensor(sequence.to_numpy(), dtype=torch.float32),
             label=torch.tensor(label).long()
         )
     
 class DataModule(pl.LightningDataModule):
-    def __init__(self, train_sequences, test_sequences, batch_size):
+    def __init__(self, train_sequences, test_sequences, val_sequences, batch_size):
         super().__init__()
         self.train_sequences = train_sequences
         self.test_sequences = test_sequences
+        self.val_sequences = val_sequences
         self.batch_size = batch_size
 
     def setup(self, stage=None):
-        self.train_dataset = DataModule(self.train_sequences)
-        self.test_dataset = DataModule(self.test_sequences)
-        self.val_dataset = DataModule(self.val_dataset) #ADICIONAR DATASET DE VALIDAÇÃO DEPOIS
+        self.train_dataset = TimeSeriesTorchDataset(self.train_sequences)
+        self.test_dataset = TimeSeriesTorchDataset(self.test_sequences)
+        self.val_dataset = TimeSeriesTorchDataset(self.val_sequences)
 
     def train_dataloader(self):
         return DataLoader(
             self.train_dataset,
             batch_size=self.batch_size,
             shuffle=True,
-            n_workers = cpu_count()
+            num_workers=cpu_count()
         )
-    
+
     def test_dataloader(self):
         return DataLoader(
             self.test_dataset,
             batch_size=self.batch_size,
-            shuffle=True,
-            n_workers = cpu_count()
+            shuffle=False,
+            num_workers=cpu_count()
         )
-    
+
     def val_dataloader(self):
         return DataLoader(
             self.val_dataset,
             batch_size=self.batch_size,
-            shuffle=True,
-            n_workers = cpu_count()
+            shuffle=False,
+            num_workers=cpu_count()
         )
 
 class LSTMTimeSeriesClassification(nn.Module):
@@ -100,7 +101,7 @@ class LSTMTimeSeriesClassification(nn.Module):
             hidden_size=n_hidden,
             num_layers=n_layers,
             batch_first=True,
-            dropout=0.75
+            dropout=0.2
         )
 
         self.classifier = nn.Linear(n_hidden, n_classes)
@@ -160,6 +161,6 @@ class Predictor(pl.LightningModule):
         self.log("validation_accuracy", step_accuracy, prog_bar=True, logger=True)
         return {"loss": loss, "accuracy":step_accuracy}
 
-    def config_optimizers(self):
+    def configure_optimizers(self):
         return optim.Adam(self.parameters(), lr=0.0001)
     

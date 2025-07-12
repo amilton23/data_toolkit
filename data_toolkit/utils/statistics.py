@@ -172,7 +172,7 @@ def power_analysis(p1 = 0, p2 = 1, proportion_use=False, effect_size = 0.5, alph
         nobs = sm.stats.NormalIndPower().solve_power(effect_size=effect_size, alpha=alpha, power=power, ratio=1, alternative='two-sided')
     return round(nobs)
 
-def simulacao_bingo(tamanho_amostral):
+def pool_simulation(tamanho_amostral):
     meses_para_chamada = []
     
     for _ in range(tamanho_amostral):
