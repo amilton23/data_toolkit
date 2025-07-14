@@ -16,7 +16,7 @@ from sklearn.model_selection import train_test_split, KFold
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
 from transformers import AdamW, BertForSequenceClassification, BertTokenizer
 
-from ..utils.dataviz import print_progress_bar
+from ..utils.viz import print_progress_bar
 from ..utils.general import get_current_datetime
 
 class BERTHuggingFaceClassification:

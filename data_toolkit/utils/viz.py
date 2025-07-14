@@ -8,7 +8,6 @@ Library for data visualization - both Jupyter notebook output and other applicat
 
 import os
 import time
-from multiprocessing import Pool
 
 import time
 import pandas as pd

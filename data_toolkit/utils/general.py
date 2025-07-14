@@ -18,6 +18,7 @@ T = TypeVar("T")
 
 def load_local_key(keys_path, key_name):
     """
+    (PT-BR)
     Caso não esteja utilizando credenciais em repositório.
     """
     if os.path.exists(keys_path):
@@ -32,6 +33,7 @@ def load_local_key(keys_path, key_name):
 
 def create_dir_returning_path(name:str):
     """
+    (PT-BR)
     Cria pasta de nome passado como string. Função utilitária de model_evaluation_cm().
     
     Args:
@@ -49,6 +51,7 @@ def create_dir_returning_path(name:str):
 
 def switch_label(dict_mapping, series):
     """
+    (PT-BR)
     Altera label string para resposta quantitativa a partir de dict, saída é uma pandas Series.
     """
     # Inverter o dicionário para ter as chaves como valores e vice-versa
@@ -91,6 +94,7 @@ def keep_number(text):
 
 def map_values(value, mapping_dict, reverse=False):
     """
+    (PT-BR)
     Mapeia um valor para o respectivo valor numérico ou de string com base em um dicionário de mapeamento.
 
     Parâmetros:
@@ -109,6 +113,7 @@ def map_values(value, mapping_dict, reverse=False):
     
 def text_preprocessing(text : str):
     """
+    (PT-BR)
     Deixa o texto em tudo minúsculo e remove caracteres especiais mantendo letras/vogais e espaços entre termos.
     """
     text = text.lower()
@@ -117,6 +122,7 @@ def text_preprocessing(text : str):
 
 def df_move_to_left(df, linha_idx, coluna_inicio):
     """
+    (PT-BR)
     Desloca os valores de uma linha do DataFrame uma posição para a esquerda,
     preenchendo com None nas colunas à direita da coluna selecionada.
 
@@ -146,8 +152,9 @@ def df_move_to_left(df, linha_idx, coluna_inicio):
 
     return df_copia
 
-def concatenar_valores_em_linhas(df, coluna_origem, coluna_destino, linhas_indices):
+def concatenate_in_lines(df, coluna_origem, coluna_destino, linhas_indices):
     """
+    (PT-BR)
     Adiciona os valores de uma coluna apenas em linhas específicas, concatenando com o que já está
     presente na coluna de destino, e armazena o resultado na mesma coluna.
 
@@ -174,6 +181,7 @@ def concatenar_valores_em_linhas(df, coluna_origem, coluna_destino, linhas_indic
 
 def transform_and_insert(valor, col_name = 'col'):
     """
+    (PT-BR)
     Remove pontos e substitui vírgulas por ponto, depois divide a string pelos espaços e converte cada parte para float, retornando uma tupla.
 
     Parâmetros:
