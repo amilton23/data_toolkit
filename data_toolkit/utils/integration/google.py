@@ -2,7 +2,6 @@
 Funções utilitárias para acesso aos recursos Google
 """
 
-
 # Google Authentication
 from pydrive.drive import GoogleDrive
 from pydrive.auth import GoogleAuth

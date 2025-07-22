@@ -103,44 +103,39 @@ def model_evaluation_cm(
     """
     fig, axs = plt.subplots(1, 1, figsize=(6, 6))
 
-    # Definindo os rótulos como únicos valores de y_true se não forem fornecidos
     if disp_labels is None:
         disp_labels = sorted(list(pd.unique(y_true)))
 
-    # Se um mapeamento de rótulos foi fornecido, aplicamos as descrições
     if label_mapping is not None:
         disp_labels = [label_mapping.get(str(label), str(label)) for label in disp_labels]
 
-    # Calculando a matriz de confusão
     cm = confusion_matrix(y_true=y_true, y_pred=y_predicted, labels=sorted(pd.unique(y_true)))
+    cm_normalized = cm / cm.sum() * 100  # Normalização em porcentagem
 
-    # Gerando a matriz de confusão com uma escala de cores e fixando os rótulos
     disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=disp_labels)
-    disp.plot(cmap='Blues', ax=axs, values_format='d')  # 'd' para valores inteiros fixos
+    disp.plot(cmap='Blues', ax=axs, values_format='d')
 
-    # Adicionando rótulos de VP, VN, FP, FN no centro de cada quadrante com ajuste de cor da fonte
-    max_value = cm.max()  # Para normalizar as cores e definir a legibilidade
-
+    max_value = cm.max()
+    
     for i in range(cm.shape[0]):
         for j in range(cm.shape[1]):
-            # Definindo a cor da fonte com base na intensidade
             color = "white" if cm[i, j] > max_value / 2 else "black"
-
-            if cm.shape == (2, 2):  # Caso binário
+            percent_value = cm_normalized[i, j]
+            
+            if cm.shape == (2, 2):
                 if i == j:
-                    label = "VP" if i == 1 else "VN"  # Diagonal principal
+                    label = "TP" if i == 1 else "TN"
                 else:
-                    label = "FP" if i < j else "FN"  # Fora da diagonal
+                    label = "FP" if i < j else "FN"
             else:
                 label = ""
-            
-            # Adicionando o texto e escolhendo a cor da fonte
-            axs.text(j, i, f"\n\n({label})", ha="center", va="center", color=color, fontsize=10)
 
-    # Ajustando o título, eixos x e y
+            axs.text(j, i, f"{percent_value:.1f}%\n({label})", 
+                     ha="center", va="center", color=color, fontsize=10)
+
     axs.set_title(suptl, fontsize=14)
-    axs.set_xlabel(xlabel if xlabel else 'Predição da IA', fontsize=12)
-    axs.set_ylabel(ylabel if ylabel else 'Predição Real', fontsize=12)
+    axs.set_xlabel(xlabel if xlabel else 'AI Prediction', fontsize=12)
+    axs.set_ylabel(ylabel if ylabel else 'Real Prediction', fontsize=12)
 
     # Configurando os limites dos eixos para manter os quadrantes fixos
     axs.set_xlim(-0.5, len(disp_labels) - 0.5)
@@ -764,146 +759,149 @@ def plotly_line_chart(tempo, pd_sr):
 
     return None
 
-def matriz_pearson_quisquared(df):
+def pearson_chisquared(df):
     """
-    Descrição/Description:
-        Função
+    Description:
+        This function generates a heatmap of the Chi-Square matrix for categorical variables
+        and a Pearson correlation matrix for quantitative variables.
     
-    Argumentos/Arguments:
-        Entradas/Inputs:
-            df            - DataFrame dos registros de beneficiários Hapvida.
-            
-        Saídas/Outputs:
-            None          - Sem retorno.
+    Arguments:
+        Inputs:
+            df            - DataFrame to be analyzed.
+        Outputs:
+            None          - No return value.
     """
-    tic_final = time.time()
+    tic_final = time()
     
-    tic_1 = time.time()
-    #DF que armazenará as variáveis categóricas
+    tic_1 = time()
+    # DataFrames to store categorical and quantitative variables
     df_cat = pd.DataFrame(index=df.index)
-
-    #DF que armazenará as variáveis quantitativas
     df_quanti = pd.DataFrame(index=df.index)
-    toc_1 = time.time()
-    print("1. Tempo de criação de DF's de apoio (df_cat e df_quanti): {}".format(toc_1 - tic_1))
     
-    tic_2 = time.time()
+    toc_1 = time()
+    print("1. Time to create helper DataFrames (df_cat and df_quanti): {}".format(toc_1 - tic_1))
     
-    # CHECANDO O DTYPE DAS COLUNAS E ARMAZENANDO AS COLUNAS NOS RESPECTIVOS DATATYPES 
-    # PONTO DE MELHORIA -> df_num = df.dtype('int') | df_num = df[df.dtype() != "obj" or df.dtype() != "complex")
-    
+    tic_2 = time()
+    # Assigning columns to appropriate DataFrames based on dtype
     for i in range(len(df.columns)):
-        if df.iloc[:,i].dtype == 'int' or df.iloc[:,i].dtype == 'float' or df.iloc[:,i].dtype == 'complex':
-            df_quanti = df_quanti.join(df.iloc[:,i])
+        if df.iloc[:, i].dtype in ['int', 'float', 'complex']:
+            df_quanti = df_quanti.join(df.iloc[:, i])
         else:
-            df_cat = df_cat.join(df.iloc[:,i])
+            df_cat = df_cat.join(df.iloc[:, i])
     
-    toc_2 = time.time()
-    print("2. Tempo de armazenamento de DF's de apoio por coluna (df_cat e df_quanti): {}".format(toc_2 - tic_2))
+    toc_2 = time()
+    print("2. Time to assign columns to df_cat and df_quanti: {}".format(toc_2 - tic_2))
     
-    tic_3 = time.time()
-    
-    # REMOVENDO INDEXES DUPLICADOS RESULTANTES DOS ".JOIN" 
+    tic_3 = time()
+    # Removing duplicated indices due to .join operations
     df_cat = df_cat[~df_cat.index.duplicated(keep='first')]
     df_quanti = df_quanti[~df_quanti.index.duplicated(keep='first')]
     
-    toc_3 = time.time()
-    print("3. Tempo de remoção de duplicados (df_cat e df_quanti): {}".format(toc_3 - tic_3))
+    toc_3 = time()
+    print("3. Time to remove duplicated indexes (df_cat and df_quanti): {}".format(toc_3 - tic_3))
     
-    ## COLOCAR 1 ao invés de 0
+    # Chi-Square matrix for categorical variables
     if len(df_cat.columns) > 0:
-        tic_4 = time.time()
-        # GERANDO UMA MATRIZ DE COLUNAS IGUAIS AOS INDEXES
-        matrix_chi2 = pd.DataFrame(index= df_cat.columns, columns=df_cat.columns)
-        toc_4 = time.time()
-        print("4. Tempo de criação matriz NxN (df_cat): {}".format(toc_4 - tic_4))
+        tic_4 = time()
+        chi2_matrix = pd.DataFrame(index=df_cat.columns, columns=df_cat.columns)
+        toc_4 = time()
+        print("4. Time to create NxN matrix for categorical variables: {}".format(toc_4 - tic_4))
         
-        tic_5 = time.time()
-        
-        # GERANDO O CHI-QUADRADO DA MATRIZ N x N DE VARIÁVEIS CATEGÓRICAS
+        tic_5 = time()
         for i in range(len(df_cat.columns)):
             for j in range(len(df_cat.columns)):
-                matrix_chi2.iloc[i,j] = chi2(pd.crosstab(df_cat.iloc[:,i], df_cat.iloc[:,j]))[1]
-        toc_5 = time.time()
-        print("5. Tempo de geração do chi-quadrado (df_cat): {}".format(toc_5 - tic_5))
+                chi2_matrix.iloc[i, j] = chi2(pd.crosstab(df_cat.iloc[:, i], df_cat.iloc[:, j]))[1]
+        toc_5 = time()
+        print("5. Time to compute chi-square statistics: {}".format(toc_5 - tic_5))
         
-        # CRIAÇÃO DO GRÁFICO DA MATRIZ QUI-QUADRADO COM HEATMAP
-        matrix_chi2 = matrix_chi2.astype(float)
+        chi2_matrix = chi2_matrix.astype(float)
 
-        sns.set(font_scale=1.7)
-        fig, (ax1) = plt.subplots(1,1)
-        heat_geral = sns.heatmap(matrix_chi2,
-                                 linewidths=0.5,
-                                 vmin=-1,
-                                 vmax=1,
-                                 cmap= "coolwarm",
-                                 annot=True,
-                                 annot_kws={'size': 35},
-                                 ax=ax1,
-                                 xticklabels=True,
-                                 yticklabels=True)
-        
+        if len(df_cat.columns) > 15:
+            annot_bool = False
+        else:
+            annot_bool = True
+
+        fig, ax1 = plt.subplots(1, 1)
+        heatmap = sns.heatmap(
+            chi2_matrix,
+            linewidths=0.5,
+            vmin=-1,
+            vmax=1,
+            cmap="coolwarm",
+            annot=annot_bool,
+            annot_kws={'size': 35},
+            ax=ax1,
+            xticklabels=True,
+            yticklabels=True
+        )
         ax1.tick_params(axis='both', which='major', labelsize=25)
         plt.xticks(rotation=45)
-        heat_geral.set_title(f"Matriz Qui-Quadrado das variáveis categóricas {df_cat.columns[0]} a {df_cat.columns[-1]}", pad=16)
-        fig.set_size_inches([33,27])
-        
-        #CRIANDO PASTA DE SAÍDA PARA SALVAR GRÁFICO
+        heatmap.set_title(
+            f"Chi-Square Matrix of Categorical Variables: {df_cat.columns[0]} to {df_cat.columns[-1]}", pad=16)
+        fig.set_size_inches([33, 27])
+
+        # Creating output directory to save heatmap
         PATH_DIR = os.getcwd() + '/'
         dir_name = PATH_DIR + 'outputs/'
         if not os.path.exists(dir_name):
             os.mkdir(dir_name)
 
-        fig.savefig(dir_name + f'chi2_matrix_{df_cat.columns[0]}_a_{df_cat.columns[-1]}.png', dpi=600)
+        fig.savefig(dir_name + f'chi2_matrix_{df_cat.columns[0]}_to_{df_cat.columns[-1]}.png', dpi=600)
     else:
-        print("Não há variáveis categóricas no DataFrame inserido.")
+        print("No categorical variables found in the input DataFrame.")
         
+    # Pearson correlation matrix for quantitative variables
     if len(df_quanti.columns) > 0:
-        # GERANDO UMA MATRIZ DE COLUNAS IGUAIS AOS INDEXES
-        matrix_pearson = pd.DataFrame(index= df_quanti.columns, columns=df_quanti.columns)
+        pearson_matrix = pd.DataFrame(index=df_quanti.columns, columns=df_quanti.columns)
         
         for i in range(len(df_quanti.columns)):
             for j in range(len(df_quanti.columns)):
-                matrix_pearson.iloc[i,j] = np.corrcoef(df_quanti.iloc[:,i], df_quanti.iloc[:,j])[0,1]
+                pearson_matrix.iloc[i, j] = np.corrcoef(df_quanti.iloc[:, i], df_quanti.iloc[:, j])[0, 1]
         
-        # CRIAÇÃO DO GRÁFICO DA MATRIZ QUI-QUADRADO COM HEATMAP
-        matrix_pearson = matrix_pearson.astype(float)
+        pearson_matrix = pearson_matrix.astype(float)
 
-        sns.set(font_scale=1.7)
-        fig, (ax1) = plt.subplots(1,1)
-        heat_geral = sns.heatmap(matrix_pearson,
-                                 linewidths=0.5,
-                                 vmin=-1,
-                                 vmax=1,
-                                 cmap= "coolwarm",
-                                 annot=True,
-                                 annot_kws={'size': 35},
-                                 ax=ax1,
-                                 xticklabels=True,
-                                 yticklabels=True)
+        if len(df_quanti.columns) > 15:
+            annot_bool = False
+        else:
+            annot_bool = True
+            
+        fig, ax1 = plt.subplots(1, 1)
+        heatmap = sns.heatmap(
+            pearson_matrix,
+            linewidths=0.5,
+            vmin=-1,
+            vmax=1,
+            cmap="coolwarm",
+            annot=annot_bool,
+            annot_kws={'size': 35},
+            ax=ax1,
+            xticklabels=True,
+            yticklabels=True
+        )
         ax1.tick_params(axis='both', which='major', labelsize=25)
         plt.xticks(rotation=45)
-        heat_geral.set_title(f"Matriz de correlação linear de Pearson das variáveis quantitativas {df_quanti.columns[0]} a {df_quanti.columns[-1]}", pad=16)
-        fig.set_size_inches([33,27])
-        
-        #CRIANDO PASTA DE SAÍDA PARA SALVAR GRÁFICO
+        heatmap.set_title(
+            f"Pearson Correlation Matrix of Quantitative Variables: {df_quanti.columns[0]} to {df_quanti.columns[-1]}", pad=16)
+        fig.set_size_inches([33, 27])
+
+        # Creating output directory to save heatmap
         PATH_DIR = os.getcwd() + '/'
         dir_name = PATH_DIR + 'outputs/'
         if not os.path.exists(dir_name):
             os.mkdir(dir_name)
 
-        fig.savefig(dir_name + f'pearson_linear_{df_quanti.columns[0]}_a_{df_quanti.columns[-1]}.png', dpi=600)
+        fig.savefig(dir_name + f'pearson_matrix_{df_quanti.columns[0]}_to_{df_quanti.columns[-1]}.png', dpi=600)
     else:
-        print("Não há variáveis quantitativas no DataFrame inserido.")
+        print("No quantitative variables found in the input DataFrame.")
     
-    toc_final = time.time()
-    print("Tempo de processamento total: {}".format(toc_final - tic_final))
-    return 
+    toc_final = time()
+    print("Total processing time: {}".format(toc_final - tic_final))
+    return None
 
-def sns_customplot(df, row = '', col = '', type_plot = 'histplot'):
+def sns_customplot(df, row='', col='', type_plot='histplot', hue_col=None, ylabel = 'Frequency', bins = 5):
     """
     Descrição:
-        Função que determina automaticamente quantas colunas podem ser distribuidas em uma matriz bidimensional e gera 
+        Função que determina automaticamente quantas colunas podem ser distribuídas em uma matriz bidimensional e gera 
         um histograma referente ao DataFrame input.
     Argumentos:
         df - DataFrame input para criação do histograma.
@@ -911,7 +909,6 @@ def sns_customplot(df, row = '', col = '', type_plot = 'histplot'):
         col - Personalizar a quantidade de colunas referentes às variáveis do DataFrame.
         type_plot - Tipo de gráfico que será realizado (só inclui o histplot por enquanto).
     """
-
     color_lst = ['skyblue', 'olive', 'goldenrod', 'teal', 'mediumblue', 'tan', 'black', 'lightsteelblue', 'sandybrown', 'red', 
                  'darkturquoise', 'green', 'gold', 'darkblue', 'royalblue', 'wheat', 'midnightblue', 'dimgray', 'darkorange', 'crimson', 
                  'deepskyblue', 'mediumseagreen', 'y', 'steelblue', 'dodgerblue', 'darkkhaki', 'saddlebrown', 'gray', 'orange', 'darksalmon', 
@@ -920,158 +917,184 @@ def sns_customplot(df, row = '', col = '', type_plot = 'histplot'):
                  'lightblue', 'yellowgreen', 'linen', 'darkblue', 'cyan', 'lemonchiffon', 'indigo', 'darkslategray', 'indianred', 'salmon', 
                  'cornflowerblue', 'g', 'palegoldenrod', 'navy', 'aqua', 'beige', 'darkslategray', 'grey', 'lightsalmon', 'firebrick', 
                  'aquamarine', 'forestgreen', 'burlywood', 'c', 'turquoise', 'navajowhite', 'peru', 'lightgrey', 'tomato', 'maroon']
-    i_lst = 0
 
     print('=' * 60)
 
     if type_plot == 'histplot':
 
-        print('Criando subpasta em outputs de saída para os gráficos.')
-        #CRIANDO PASTA DE SAÍDA PARA SALVAR GRÁFICO(S)
-        PATH_DIR = os.getcwd() + '/'
-        dir_name = PATH_DIR + 'outputs/'
-        dir_graphics = dir_name + 'hist_graphics/'
-        if not os.path.exists(dir_graphics):
-            if not os.path.exists(dir_name):
-                os.mkdir(dir_name)
-            os.mkdir(dir_graphics)
+        print('Creating subfolder in outputs for the graphs.')
+        PATH_ROOT = os.getcwd() + '/'
+        PATH_OUTPUTS = os.path.join(PATH_ROOT, "outputs")
+        PATH_FINAL = os.path.join(PATH_OUTPUTS, 'hist_graphics/')
+        if not os.path.exists(PATH_FINAL):
+            if not os.path.exists(PATH_OUTPUTS):
+                os.mkdir(PATH_OUTPUTS)
+            os.mkdir(PATH_FINAL)
         
         print('=' * 15)
 
         if type(df) == pd.Series:
-            print('Gerando o histograma para uma única variável.')
+            print('Generating histogram for a single variable.')
             print('=' * 15)
-            # VALIDADO? - OK
-            # CONDIÇÃO CASO SEJA APENAS UMA VARIÁVEL
+
             fig, axs = plt.subplots(1, 1, figsize=(5, 5))
-            sns.histplot(data=df, kde=True, color=color_lst[0])
-            fig.suptitle(f'Histograma da variável {df.name}', fontsize=15)
-            plt.savefig(dir_graphics + f'histograma_pergunta_{df.name}.png')
+            sns.histplot(data=df, kde=True, color=color_lst[0], bins = bins)
+             
+
+            for patch in axs.patches:
+                x = patch.get_x() + patch.get_width() / 2
+                y = patch.get_height()
+                 
+                axs.annotate(f"{int(y)} ({round(y*100/len(df), 1)}%)", (x, y), ha='center', va='bottom', color='black')
+
+            fig.suptitle(f'Histogram of the variable {df.name}', fontsize=15)
+            
+            plt.ylabel(ylabel)
+            plt.savefig(PATH_FINAL + f'histogram_{df.name}.png')
             plt.show()
 
         else:
             if (type(row) == int) & (type(col) == int):
                 if len(df.columns) <= row*col:
-                    print(f'Gerando o histograma para a condição personalizada {row} X {col}.')
+                     
+                    print(f'Generating histogram for the customized {row} X {col}.')
                     print('=' * 15)
-                    fig, axs = plt.subplots(row, col, figsize=(5*col, 5*row))
-                    k = 0
-                    for i in range(row):
-                        for j in range(col):
-                            if df.columns[k] == df.columns[-1]:
-                                sns.histplot(data=df, x=df.columns[k], kde=True, color=color_lst[k], ax=axs[i, j])
-                                break
-                            else:
-                                sns.histplot(data=df, x=df.columns[k], kde=True, color=color_lst[k], ax=axs[i, j])
-                                k += 1
+                    n_vars = len(df.columns)
+                    n_cols = min(n_vars, col)
+                    n_rows = -(-n_vars // n_cols)  # Arredondamento para cima
 
-                    fig.suptitle(f'Histograma das variáveis {df.columns[0]} a {df.columns[-1]}', fontsize=15)
-                    plt.savefig(dir_graphics + f'histograma_perguntas_{df.columns[0]}_a_{df.columns[-1]}.png', dpi=600, bbox_inches='tight')
+                    fig, axs = plt.subplots(n_rows, n_cols, figsize=(5 * n_cols, 5 * n_rows))
+                    k = 0
+                    for i in range(n_rows):
+                        for j in range(n_cols):
+                            if k >= n_vars:
+                                break
+                            sns.histplot(data=df, x=df.columns[k], kde=True, color=color_lst[k], ax=axs[i, j], bins = bins)
+                            for patch in axs[i, j].patches:
+                                x = patch.get_x() + patch.get_width() / 2
+                                y = patch.get_height()
+                                 
+                                axs[i, j].annotate(f'{int(y)} ({round(y*100/len(df), 1)}%)', (x, y), ha='center', va='bottom', color='black')
+                            axs[i, j].set_ylabel(ylabel)
+                            k += 1
+
+                    fig.suptitle(f'Histogram of variables {df.columns[0]} to {df.columns[-1]}', fontsize=15)
+
+                    plt.savefig(PATH_FINAL + f'histogram_{df.columns[0]}_to_{df.columns[-1]}.png', dpi=600, bbox_inches='tight')
                     plt.show()
                 else:
-                    print('Tamanho configurado de linhas e colunas é inferior à quantidade de colunas do DataFrame.')
-                    print('Saindo da função.')
+                    print('Plot could not be generated due to the number of columns exceeding the specified row and column limits.')
                     print('=' * 60)
                     return
                     
             else:
                 if (len(df.columns) == 1):
-                    print('Gerando o histograma para uma única variável.')
                     print('=' * 15)
                     # VALIDADO? - OK
                     # CONDIÇÃO CASO SEJA APENAS UMA VARIÁVEL
                     fig, axs = plt.subplots(1, 1, figsize=(5, 5))
-                    sns.histplot(data=df, x = df.columns[-1], kde=True, color=color_lst[0])
-                    fig.suptitle(f'Histograma da variável {df.columns[-1]}', fontsize=15)
-                    plt.savefig(dir_graphics + f'histograma_pergunta_{df.columns[-1]}.png', dpi=600, bbox_inches='tight')
+                    sns.histplot(data=df, x=df.columns[-1], kde=True, color=color_lst[0], bins = bins)
+
+                    for patch in axs.patches:
+                        x = patch.get_x() + patch.get_width() / 2
+                        y = patch.get_height()
+                         
+                        axs.annotate(f'{int(y)} ({round(y*100/len(df), 1)}%)', (x, y), ha='center', va='bottom', color='black')
+
+                    fig.suptitle(f'Histogram of variable {df.columns[-1]}', fontsize=15)
+                    
+                    
+                    plt.ylabel(ylabel)
+                    plt.savefig(PATH_FINAL + f'histogram_{df.columns[-1]}.png', dpi=600, bbox_inches='tight')
                     plt.show()
 
                 elif (len(df.columns) <= 5) & (len(df.columns) >= 2):
-                    print(f'Gerando o histograma automático para {len(df.columns)} variáveis.')
-                    print('=' * 15)            
-                    # VALIDADO? - OK
-                    # CONDIÇÃO CASO SEJA MENOR OU IGUAL A 5 VARIÁVEIS
+                    print('=' * 15)                                 
                     fig, axs = plt.subplots(1, len(df.columns), figsize=((5*len(df.columns)), 5))        
                     for i in range(len(df.columns)):
-                        sns.histplot(data=df, x=df.columns[i], kde=True, color=color_lst[i], ax=axs[i])
+                        sns.histplot(data=df, x=df.columns[i], kde=True, color=color_lst[i], ax=axs[i], bins = bins)
+                        for patch in axs[i].patches:
+                            x = patch.get_x() + patch.get_width() / 2
+                            y = patch.get_height()
+                             
+                            axs[i].annotate(f'{int(y)} ({round(y*100/len(df), 1)} %)', (x, y), ha='center', va='bottom', color='black')
 
-                    fig.suptitle(f'Histograma das variáveis {df.columns[0]} a {df.columns[-1]}', fontsize=15)
-                    plt.savefig(dir_graphics + f'histograma_perguntas_{df.columns[0]}_a_{df.columns[-1]}.png', dpi=600, bbox_inches='tight')
+                    fig.suptitle(f'Histogram of variables {df.columns[0]} to {df.columns[-1]}', fontsize=15)
+                    
+                    for i in range(len(df.columns)):
+                        axs[i].set_ylabel(ylabel)
+                    plt.savefig(PATH_FINAL + f'histogram_{df.columns[0]}_to_{df.columns[-1]}.png', dpi=600, bbox_inches='tight')
                     plt.show()
 
-
                 elif (len(df.columns) > 5) & (len(df.columns) <= 100):
-                    print(f'Gerando o histograma automático para {len(df.columns)} variáveis.')
                     print('=' * 15)            
-                    # CONDIÇÃO CASO SEJA MAIOR QUE 5 E MENOR QUE 100 VARIÁVEIS
                     if np.sqrt(len(df.columns)) == int(np.sqrt(len(df.columns))):
-                        # VALIDADO? - OK
-                        #CHECANDO SE HÁ UM VALOR AO QUADRADO QUE POSSAR TANTO COMO LINHA QUANTO COMO COLUNA
                         dim = int(np.sqrt(len(df.columns)))
                         fig, axs = plt.subplots(dim, dim, figsize=(5*dim, 5*dim)) 
-
+                        
                         aux = 0              
                         for i in range(dim):
                             for j in range(dim):
-                                sns.histplot(data=df, x=df.columns[aux], kde=True, color=color_lst[aux], ax=axs[i, j])
+                                sns.histplot(data=df, x=df.columns[aux], kde=True, color=color_lst[aux], ax=axs[i, j], bins=bins)
+                                for patch in axs[i, j].patches:
+                                    x = patch.get_x() + patch.get_width() / 2
+                                    y = patch.get_height()
+                                    axs[i, j].annotate(f'{int(y)} ({round(y*100/len(df), 1)} %)', (x, y), ha='center', va='bottom', color='black')
+                                axs[i, j].set_ylabel(ylabel)
                                 aux += 1
-                                
-                    # VALIDADO? - NÃO
-                    # elif condição muito massa que eu não sei ainda:
-                    #     aux = 0              
-                    #     for i in range(dim):
-                    #         for j in range(dim):
-                    #             sns.histplot(data=df, x=df.columns[aux], kde=True, color=color_lst[aux], ax=axs[i, j])
-                    #             aux += 1
-                    fig.suptitle(f'Histograma das variáveis {df.columns[0]} a {df.columns[-1]}', fontsize=15)
-                    plt.savefig(dir_graphics + f'histograma_perguntas_{df.columns[0]}_a_{df.columns[-1]}.png', dpi=600, bbox_inches='tight')
-                    plt.show()
+
+                        fig.suptitle(f'Histogram of variables {df.columns[0]} to {df.columns[-1]}', fontsize=15)
+                        plt.savefig(PATH_FINAL + f'histogram_{df.columns[0]}_to_{df.columns[-1]}.png', dpi=600, bbox_inches='tight')
+                        plt.show()
+                    else:
+                        print("Número de colunas não permite uma matriz quadrada perfeita de subplots.")
 
                 else:
-                    print('FUNÇÃO NÃO PERMITE NÚMERO DE COLUNAS SUPERIOR A 100.')
+                    print('Function sns_customplot does not support more than 100 variables.')
 
-        print('Processo concluído com êxito.')
-        print(f"Histograma salvo no caminho '{dir_graphics}'.")
+        print('Process completed successfully.')
+        print(f"Histogram saved on '{PATH_FINAL}'.")
         print('=' * 60)
 
     elif type_plot == 'barplot':
 
-        print('Criando subpasta em outputs de saída para os gráficos.')
-
-        #CRIANDO PASTA DE SAÍDA PARA SALVAR GRÁFICO(S)
-        PATH_DIR = os.getcwd() + '/'
-        dir_name = PATH_DIR + 'outputs/'
-        dir_graphics = dir_name + 'bar_graphics/'
-        if not os.path.exists(dir_graphics):
-            if not os.path.exists(dir_name):
-                os.mkdir(dir_name)
-            os.mkdir(dir_graphics)
+        PATH_ROOT = os.getcwd() + '/'
+        PATH_OUTPUTS = os.path.join(PATH_ROOT, "outputs")
+        PATH_FINAL = os.path.join(PATH_OUTPUTS, 'bar_graphics/')
+        if not os.path.exists(PATH_FINAL):
+            if not os.path.exists(PATH_OUTPUTS):
+                os.mkdir(PATH_OUTPUTS)
+            os.mkdir(PATH_FINAL)
         
         print('=' * 15)
 
-        print(f'Gerando o gráfico de barras para as {len(df.columns)} variáveis.')
         print('=' * 15)
 
         sns.set_palette(color_lst)
         fig, axs = plt.subplots(1, 1, figsize=(5, 5))
         
-        sns.barplot(x= np.mean(df), 
-                    y = df.columns,
-                    edgecolor = ".1",
-                    linewidth = 1.5)
-        plt.xlim(1,5)
+        sns.barplot(x=np.mean(df), 
+                    y=df.columns,
+                    edgecolor=".1",
+                    hue=hue_col,
+                    linewidth=1.5)
+        plt.xlim(1, 5)
         
         fig.suptitle(f'Gráfico de barras das médias variáveis {df.columns[0]} a {df.columns[-1]}', fontsize=15)
-        plt.savefig(dir_graphics + f'barplot_perguntas_{df.columns[0]}_a_{df.columns[-1]}.png', dpi=600, bbox_inches='tight')
+        
+        # Adicione esta parte para adicionar rótulos com a contagem das barras
+        for i, val in enumerate(np.mean(df)):
+            axs.annotate(str(round(val, 2)), xy=(val, i), ha='left', va='center')
+
+        plt.savefig(PATH_FINAL + f'barplot_perguntas_{df.columns[0]}_a_{df.columns[-1]}.png', dpi=600, bbox_inches='tight')
         plt.show()
 
-        print('Processo concluído com êxito.')
-        print(f"Gráfico de barras salvo no caminho '{dir_graphics}'.")
+        print(f"Plot generated on path '{PATH_FINAL}'.")
         print('=' * 60)
     
     else:
-        print("Insira um tipo de gráfico válido.")
-        print(f"O que foi inserido: {type_plot}")
-        print(f"Possibilidades de type_plot: 'histplot' e 'barplot'.")
-        
-    return
+        print("Not a valid plot.")
+        print(f"Type inserted: {type_plot}")
+        print(f"type_plot possibilities: 'histplot' / 'barplot'.")
+    
+    return None

@@ -1,4 +1,6 @@
 """
+This module contains functions for training BERT models.
+
 (PT-BR)
 Modelo BERT para classificação de texto utilizando a biblioteca HuggingFace Transformers.
 
@@ -104,10 +106,8 @@ class BERTHuggingFaceClassification:
     def __init__(
         self,
         size: str = "base",
-        dict_labels=None,
         preprocess=None,
-        foundation_model=None,
-        threshold=None,
+        foundation_model=None
     ):
         """
         (PT-BR)
@@ -118,7 +118,6 @@ class BERTHuggingFaceClassification:
             dict_labels (dict, optional): Dicionário de labels para as classes do modelo. Defaults to None.
             preprocess (Callable, optional): Função de pré-processamento dos textos. Defaults to None.
             foundation_model (str, optional): Nome do modelo BERT pré-treinado utilizado. Defaults to None.
-            threshold (float, optional): Limite de probabilidade para considerar uma classe como positiva. Defaults to None.
         Retorna:
             None
         
@@ -130,7 +129,6 @@ class BERTHuggingFaceClassification:
             dict_labels (dict, optional): Dictionary of labels for the model's classes. Defaults to None.
             preprocess (Callable, optional): Function for text preprocessing. Defaults to None.
             foundation_model (str, optional): Name of the pre-trained BERT model used. Defaults to None.
-            threshold (float, optional): Probability threshold to consider a class as positive. Defaults to None.
         Returns:
             None
         """
@@ -143,8 +141,6 @@ class BERTHuggingFaceClassification:
 
         self.model_name: str = f"neuralmind/bert-{size}-portuguese-cased"
         
-        self.threshold = threshold
-        
         if foundation_model is not None:
             self.model_name = foundation_model
 
@@ -155,34 +151,7 @@ class BERTHuggingFaceClassification:
         print(f"    - set to {self.device}")
         print("")
 
-        if dict_labels:
-            self._dict_labels = dict_labels
-
-            if "0" not in self._dict_labels:
-                self._dict_labels["0"] = "NEGATIVE"
-            if "1" not in self._dict_labels:
-                self._dict_labels["1"] = "POSITIVE"
-            if "-1" not in self._dict_labels:
-                self._dict_labels["-1"] = "NOT FOUND"
-            if "-2" not in self._dict_labels:
-                self._dict_labels["-2"] = "UNDEFINED"
-            if "-3" not in self._dict_labels:
-                self._dict_labels["-3"] = "UNKNOWN"
-            if "-4" not in self._dict_labels:
-                self._dict_labels["-4"] = "EMPTY"
-        else:
-            self._dict_labels = {
-                "0": "NEGATIVE",
-                "1": "POSITIVE",
-                "-1": "NOT FOUND",
-                "-2": "UNDEFINED",
-                "-3": "UNKNOWN",
-                "-4": "EMPTY",
-            }
-
-        if preprocess is None:
-            self._preprocess = lambda x: x
-        else:
+        if preprocess is not None:
             self._preprocess = preprocess
 
     def preprocess(self, text):
@@ -423,7 +392,7 @@ class BERTHuggingFaceClassification:
             max_length=512,
             return_tensors="pt",
         )
-        print(f"  - tokenização do conjunto de treinamento")
+
         test_encodings = self.tokenizer(
             list(X_test),
             padding=True,
@@ -431,14 +400,14 @@ class BERTHuggingFaceClassification:
             max_length=512,
             return_tensors="pt",
         )
-        print(f"  - tokenização do conjunto de teste")
+
         # Criar DataLoader para o treinamento
         train_dataset = TensorDataset(
             train_encodings["input_ids"],
             train_encodings["attention_mask"],
             torch.tensor(y_train.values),
         )
-        print(f"  - criação do dataset do conjunto de treinamento")
+
         train_sampler = RandomSampler(train_dataset)
         train_dataloader = DataLoader(
             train_dataset, sampler=train_sampler, batch_size=batch_size
@@ -450,7 +419,7 @@ class BERTHuggingFaceClassification:
             test_encodings["attention_mask"],
             torch.tensor(y_test.values),
         )
-        print(f"  - criação do dataset do conjunto de teste")
+
         test_sampler = SequentialSampler(test_dataset)
         test_dataloader = DataLoader(
             test_dataset, sampler=test_sampler, batch_size=batch_size
@@ -602,7 +571,7 @@ class BERTHuggingFaceClassification:
 def main():
     model = BERTHuggingFaceClassification()
     model.load_model("bert_model.pth")
-    output = model.infer(
+    output = model.df_infer(
         pd.DataFrame(
             {
                 "X": [

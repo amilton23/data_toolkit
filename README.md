@@ -23,6 +23,7 @@ This toolkit is organized into two main subpackages for clarity and ease of use:
 .
 ├── **models**/    # A dedicated module for implementations, wrappers, or classes of Machine Learning and Deep Learning models.
 │   ├── bert.py: Classes, methods and helper functions for using BERT models, likely for NLP tasks.
+│   ├── decisiontree.py: Functions of decision tree-based models, as well as their optimizations.
 │   ├── lstm.py: Classes, methods and helper functions for using LSTM models, common in time-series.
 │   └── genai.py: Classes, methods and helper functions of GenAI Gemini and GPT models.
 ├── **tutorials**/     # Folder containing usual examples for the functions. 

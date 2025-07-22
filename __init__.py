@@ -21,5 +21,5 @@ A collection of general and specific reusable and scalable functions for data sc
     - Interaction with infrastructure resources on Google and Microsoft Azure Clouds.
 """
 
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 __author__ = "Amilton Cardoso https://github.com/amilton23"
