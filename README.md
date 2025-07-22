@@ -21,15 +21,15 @@ This toolkit is organized into two main subpackages for clarity and ease of use:
 
 ```
 .
-├── **models**/    # A dedicated module for implementations, wrappers, or classes of Machine Learning and Deep Learning models.
+├── models/    # A dedicated module for implementations, wrappers, or classes of Machine Learning and Deep Learning models.
 │   ├── bert.py: Classes, methods and helper functions for using BERT models, likely for NLP tasks.
 │   ├── decisiontree.py: Functions of decision tree-based models, as well as their optimizations.
 │   ├── lstm.py: Classes, methods and helper functions for using LSTM models, common in time-series.
 │   └── genai.py: Classes, methods and helper functions of GenAI Gemini and GPT models.
-├── **tutorials**/     # Folder containing usual examples for the functions. 
+├── tutorials/     # Folder containing usual examples for the functions. 
 │   └── ...
-├── **utils**/     # The core of the toolkit, containing helper functions for the entire data project lifecycle.
-│   ├── **integration**/ # A subpackage for interacting with cloud platforms and data APIs.
+├── utils/     # The core of the toolkit, containing helper functions for the entire data project lifecycle.
+│   ├── integration/ # A subpackage for interacting with cloud platforms and data APIs.
 │   │   └── google.py: Helpers for Google Cloud Platform (e.g., BigQuery, Cloud Storage).
 │   │   └── microsoft.py: Helpers for Microsoft Azure (e.g., Blob Storage, SQL Database).
 │   ├── general.py: General-purpose functions that don't fit into other categories (e.g., file I/O, logging).
