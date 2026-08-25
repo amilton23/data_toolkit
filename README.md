@@ -15,7 +15,7 @@ A collection of general and specific reusable and scalable functions for data sc
 
 ---
 
-## 📦 Package Structure
+## Package Structure
 
 This toolkit is organized into two main subpackages for clarity and ease of use:
 
@@ -39,7 +39,7 @@ This toolkit is organized into two main subpackages for clarity and ease of use:
 └── ...
 ```
 
-## 🚀 Installation
+## Installation
 
 You can install `data-toolkit` from different ways, depending on your necessity.
 
